@@ -1,0 +1,243 @@
+--- FILE: index.html ---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>YouDJ - YouTube Looper</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>YouDJ</h1>
+    <input type="text" id="youtube-url" placeholder="YouTube URL" />
+    <button onclick="loadVideo()">Load Video</button>
+    
+    <div class="show-video-checkbox">
+      <input type="checkbox" id="show-video" checked onchange="toggleVideoVisibility()">
+      <label for="show-video">Показать видео</label>
+    </div>
+    
+    <div id="player-container">
+      <div id="player"></div>
+    </div>
+    
+    <div>
+      <button id="tap-btn" onclick="handleTap()">Tap</button>
+      <span id="tap-status">Tap to set start/end time</span>
+    </div>
+    
+    <div class="time-inputs">
+      <input type="number" id="start-time" placeholder="Start time (sec)" step="0.1" />
+      <input type="number" id="end-time" placeholder="End time (sec)" step="0.1" />
+      <button id="loop-btn" onclick="toggleLoop()">Play Loop</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script src="https://www.youtube.com/iframe_api"></script>
+</body>
+</html>
+
+--- FILE: styles.css ---
+body {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+#player {
+  width: 100%;
+  height: 450px;
+  margin: 20px 0;
+}
+
+input, button {
+  padding: 8px;
+  margin: 5px 0;
+}
+
+#tap-status {
+  margin: 10px 0;
+  font-weight: bold;
+}
+
+.time-inputs {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+#loop-btn {
+  padding: 8px 15px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.3s;
+}
+
+#loop-btn.looping {
+  background-color: #f44336;
+}
+
+#loop-btn::before {
+  content: "▶";
+  margin-right: 5px;
+}
+
+#loop-btn.looping::before {
+  content: "∞";
+}
+
+.show-video-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 10px 0;
+}
+
+#player-container {
+  display: block;
+}
+
+--- FILE: script.js ---
+let player;
+let tapState = 0;
+let startTime = 0;
+let endTime = 0;
+let loopInterval;
+let isLooping = false;
+const CHECK_INTERVAL = 20; // Уменьшенный интервал до 20 мс
+
+function toggleVideoVisibility() {
+  const showVideo = document.getElementById('show-video').checked;
+  document.getElementById('player-container').style.display = showVideo ? 'block' : 'none';
+}
+
+function loadVideo() {
+  const url = document.getElementById('youtube-url').value;
+  const videoId = extractVideoId(url);
+
+  if (!player) {
+    player = new YT.Player('player', {
+      videoId: videoId,
+      events: {
+        'onReady': onPlayerReady,
+        'onStateChange': onPlayerStateChange
+      }
+    });
+  } else {
+    cancelLoop();
+    player.loadVideoById(videoId);
+  }
+  
+  if (document.getElementById('show-video').checked) {
+    document.getElementById('player-container').style.display = 'block';
+  }
+}
+
+function onPlayerReady(event) {
+  console.log("Player is ready");
+}
+
+function onPlayerStateChange(event) {
+  if (event.data === YT.PlayerState.PLAYING && isLooping) {
+    checkTimeLoop();
+  }
+}
+
+function checkTimeLoop() {
+  if (!player || !isLooping) return;
+
+  const currentTime = player.getCurrentTime();
+  if (currentTime >= endTime) {
+    player.seekTo(startTime);
+    player.playVideo();
+  }
+}
+
+function handleTap() {
+  if (!player) return;
+
+  const currentTime = player.getCurrentTime();
+  
+  if (tapState === 0) {
+    startTime = currentTime;
+    document.getElementById('start-time').value = startTime.toFixed(1);
+    document.getElementById('tap-status').textContent = `Start set: ${startTime.toFixed(1)}s. Tap again for end.`;
+    tapState = 1;
+  } else {
+    endTime = currentTime;
+    document.getElementById('end-time').value = endTime.toFixed(1);
+    document.getElementById('tap-status').textContent = `Loop set: ${startTime.toFixed(1)}s → ${endTime.toFixed(1)}s`;
+    tapState = 0;
+  }
+}
+
+function toggleLoop() {
+  if (isLooping) {
+    cancelLoop();
+  } else {
+    startLoop();
+  }
+}
+
+function startLoop() {
+  if (!player) return;
+  
+  startTime = parseFloat(document.getElementById('start-time').value) || 0;
+  endTime = parseFloat(document.getElementById('end-time').value) || 0;
+  
+  if (startTime >= endTime) {
+    alert("End time must be greater than start time!");
+    return;
+  }
+
+  isLooping = true;
+  document.getElementById('loop-btn').classList.add('looping');
+  
+  player.seekTo(startTime);
+  player.playVideo();
+  
+  loopInterval = setInterval(checkTimeLoop, CHECK_INTERVAL);
+  document.getElementById('tap-status').textContent = `Looping: ${startTime.toFixed(1)}s → ${endTime.toFixed(1)}s`;
+}
+
+function cancelLoop() {
+  isLooping = false;
+  document.getElementById('loop-btn').classList.remove('looping');
+  
+  if (loopInterval) {
+    clearInterval(loopInterval);
+    loopInterval = null;
+  }
+  document.getElementById('tap-status').textContent = "Loop stopped";
+}
+
+function extractVideoId(url) {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+}
+
+// Инициализация YouTube API
+window.onYouTubeIframeAPIReady = function() {
+  if (player) return;
+  const videoId = extractVideoId(document.getElementById('youtube-url').value);
+  if (videoId) {
+    player = new YT.Player('player', {
+      videoId: videoId,
+      events: {
+        'onReady': onPlayerReady,
+        'onStateChange': onPlayerStateChange
+      }
+    });
+  }
+};
+
