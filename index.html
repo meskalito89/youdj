@@ -10,6 +10,26 @@
     input, button { padding: 8px; margin: 5px 0; }
     #tap-status { margin: 10px 0; font-weight: bold; }
     .time-inputs { display: flex; gap: 10px; align-items: center; }
+    #loop-btn {
+      padding: 8px 15px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.3s;
+    }
+    #loop-btn.looping {
+      background-color: #f44336;
+    }
+    #loop-btn::before {
+      content: "▶";
+      margin-right: 5px;
+    }
+    #loop-btn.looping::before {
+      content: "∞";
+    }
   </style>
 </head>
 <body>
@@ -27,8 +47,7 @@
     <div class="time-inputs">
       <input type="number" id="start-time" placeholder="Start time (sec)" step="0.1" />
       <input type="number" id="end-time" placeholder="End time (sec)" step="0.1" />
-      <button onclick="startLoop()">Play Loop</button>
-      <button onclick="cancelLoop()" style="background-color: #ff4444; color: white;">Cancel Loop</button>
+      <button id="loop-btn" onclick="toggleLoop()">Play Loop</button>
     </div>
   </div>
 
@@ -59,7 +78,7 @@
           });
         };
       } else {
-        cancelLoop(); // Отменяем текущий луп при загрузке нового видео
+        cancelLoop();
         player.loadVideoById(videoId);
       }
     }
@@ -102,10 +121,17 @@
       }
     }
 
+    function toggleLoop() {
+      if (isLooping) {
+        cancelLoop();
+      } else {
+        startLoop();
+      }
+    }
+
     function startLoop() {
       if (!player) return;
       
-      // Получаем значения из полей ввода
       startTime = parseFloat(document.getElementById('start-time').value) || 0;
       endTime = parseFloat(document.getElementById('end-time').value) || 0;
       
@@ -114,8 +140,8 @@
         return;
       }
 
-      cancelLoop(); // Отменяем предыдущий луп
       isLooping = true;
+      document.getElementById('loop-btn').classList.add('looping');
       
       player.seekTo(startTime);
       player.playVideo();
@@ -126,11 +152,13 @@
 
     function cancelLoop() {
       isLooping = false;
+      document.getElementById('loop-btn').classList.remove('looping');
+      
       if (loopInterval) {
         clearInterval(loopInterval);
         loopInterval = null;
       }
-      document.getElementById('tap-status').textContent = "Loop canceled";
+      document.getElementById('tap-status').textContent = "Loop stopped";
     }
 
     function extractVideoId(url) {
