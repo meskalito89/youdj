@@ -132,4 +132,3 @@ window.onYouTubeIframeAPIReady = function () {
   // Optionally auto-add first row
   addLoopRow();
 };
-

@@ -1,44 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>youdj</title>
-  </head>
-  <body>
-    
-    <div class="container">
-      <h1>YouDJ</h1>
-      <div id="loops-container"></div>
-      <button onclick="addLoopRow()" id="add-row-btn">Добавить строку</button>
-    </div>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YoDJ - Multi-Loop Player</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>YouDJ</h1>
+    <div id="loops-container"></div>
+    <button onclick="addLoopRow()" id="add-row-btn">Добавить строку</button>
+  </div>
 
-    <template id="loop-row-template">
-      <div class="loop-row">
-        <input type="text" class="youtube-url" placeholder="YouTube URL" />
-        <button class="load-video-btn">Load Video</button>
+  <template id="loop-row-template">
+    <div class="loop-row">
+      <button class="remove-btn">×</button>
+      <input type="text" class="youtube-url" placeholder="YouTube URL" />
+      <button class="load-video-btn">Load Video</button>
 
-        <label>
-          <input type="checkbox" class="show-video-checkbox" checked />
-          Показать видео
-        </label>
+      <label class="video-toggle">
+        <input type="checkbox" class="show-video-checkbox" checked />
+        Показать видео
+      </label>
 
-        <div class="player-container"></div>
+      <div class="player-container"></div>
 
-        <div>
-          <button class="tap-btn">Tap</button>
-          <span class="tap-status">Tap to set start/end time</span>
-        </div>
-
-        <div class="time-inputs">
-          <input type="number" class="start-time" placeholder="Start time (sec)" step="0.1" />
-          <input type="number" class="end-time" placeholder="End time (sec)" step="0.1" />
-          <button class="loop-btn">Play Loop</button>
-        </div>
+      <div class="control-row">
+        <button class="tap-btn">Tap</button>
+        <span class="tap-status">Tap to set start/end time</span>
       </div>
-    </template>
 
-    <script src="script.js"></script>
-    <script src="https://www.youtube.com/iframe_api"></script>
-  </body>
+      <div class="control-row">
+        <input type="number" class="start-time" placeholder="Start (sec)" step="0.1" />
+        <input type="number" class="end-time" placeholder="End (sec)" step="0.1" />
+        <button class="loop-btn">Play Loop</button>
+      </div>
+
+      <div class="control-row speed-control">
+        <span>Speed:</span>
+        <input type="number" class="speed-input" value="1.0" step="0.1" min="0.1" max="4">
+        <button class="apply-speed-btn">Apply</button>
+      </div>
+    </div>
+  </template>
+
+  <script src="script.js"></script>
+  <script src="https://www.youtube.com/iframe_api"></script>
+</body>
 </html>
