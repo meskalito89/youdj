@@ -1,38 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>YouDJ - YouTube Looper</title>
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-  <div class="container">
-    <h1>YouDJ</h1>
-    <input type="text" id="youtube-url" placeholder="YouTube URL" />
-    <button onclick="loadVideo()">Load Video</button>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>youdj</title>
+  </head>
+  <body>
     
-    <div class="show-video-checkbox">
-      <input type="checkbox" id="show-video" checked onchange="toggleVideoVisibility()">
-      <label for="show-video">Показать видео</label>
+    <div class="container">
+      <h1>YouDJ</h1>
+      <div id="loops-container"></div>
+      <button onclick="addLoopRow()" id="add-row-btn">Добавить строку</button>
     </div>
-    
-    <div id="player-container">
-      <div id="player"></div>
-    </div>
-    
-    <div>
-      <button id="tap-btn" onclick="handleTap()">Tap</button>
-      <span id="tap-status">Tap to set start/end time</span>
-    </div>
-    
-    <div class="time-inputs">
-      <input type="number" id="start-time" placeholder="Start time (sec)" step="0.1" />
-      <input type="number" id="end-time" placeholder="End time (sec)" step="0.1" />
-      <button id="loop-btn" onclick="toggleLoop()">Play Loop</button>
-    </div>
-  </div>
 
-  <script src="script.js"></script>
-  <script src="https://www.youtube.com/iframe_api"></script>
-</body>
+    <template id="loop-row-template">
+      <div class="loop-row">
+        <input type="text" class="youtube-url" placeholder="YouTube URL" />
+        <button class="load-video-btn">Load Video</button>
+
+        <label>
+          <input type="checkbox" class="show-video-checkbox" checked />
+          Показать видео
+        </label>
+
+        <div class="player-container"></div>
+
+        <div>
+          <button class="tap-btn">Tap</button>
+          <span class="tap-status">Tap to set start/end time</span>
+        </div>
+
+        <div class="time-inputs">
+          <input type="number" class="start-time" placeholder="Start time (sec)" step="0.1" />
+          <input type="number" class="end-time" placeholder="End time (sec)" step="0.1" />
+          <button class="loop-btn">Play Loop</button>
+        </div>
+      </div>
+    </template>
+
+    <script src="script.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+  </body>
 </html>
