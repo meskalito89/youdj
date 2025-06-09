@@ -9,6 +9,7 @@
     #player { width: 100%; height: 450px; margin: 20px 0; }
     input, button { padding: 8px; margin: 5px 0; }
     #tap-status { margin: 10px 0; font-weight: bold; }
+    .time-inputs { display: flex; gap: 10px; align-items: center; }
   </style>
 </head>
 <body>
@@ -23,20 +24,22 @@
       <span id="tap-status">Tap to set start/end time</span>
     </div>
     
-    <div>
-      <input type="number" id="start-time" placeholder="Start time (sec)" readonly />
-      <input type="number" id="end-time" placeholder="End time (sec)" readonly />
+    <div class="time-inputs">
+      <input type="number" id="start-time" placeholder="Start time (sec)" step="0.1" />
+      <input type="number" id="end-time" placeholder="End time (sec)" step="0.1" />
       <button onclick="startLoop()">Play Loop</button>
+      <button onclick="cancelLoop()" style="background-color: #ff4444; color: white;">Cancel Loop</button>
     </div>
   </div>
 
   <script>
     let player;
-    let tapState = 0; // 0 = waiting 1st tap, 1 = waiting 2nd tap
+    let tapState = 0;
     let startTime = 0;
     let endTime = 0;
+    let loopInterval;
+    let isLooping = false;
 
-    // Загрузка YouTube API
     function loadVideo() {
       const url = document.getElementById('youtube-url').value;
       const videoId = extractVideoId(url);
@@ -56,6 +59,7 @@
           });
         };
       } else {
+        cancelLoop(); // Отменяем текущий луп при загрузке нового видео
         player.loadVideoById(videoId);
       }
     }
@@ -65,49 +69,70 @@
     }
 
     function onPlayerStateChange(event) {
-      if (event.data === YT.PlayerState.ENDED) {
-        restartLoop();
+      if (event.data === YT.PlayerState.PLAYING && isLooping) {
+        checkTimeLoop();
       }
     }
 
-    // Обработка нажатия кнопки Tap
+    function checkTimeLoop() {
+      if (!player || !isLooping) return;
+
+      const currentTime = player.getCurrentTime();
+      if (currentTime >= endTime) {
+        player.seekTo(startTime);
+        player.playVideo();
+      }
+    }
+
     function handleTap() {
       if (!player) return;
 
       const currentTime = player.getCurrentTime();
       
       if (tapState === 0) {
-        // Первый тап - начало отрезка
         startTime = currentTime;
-        document.getElementById('start-time').value = startTime;
-        document.getElementById('tap-status').textContent = `Start set: ${startTime}s. Tap again for end.`;
+        document.getElementById('start-time').value = startTime.toFixed(1);
+        document.getElementById('tap-status').textContent = `Start set: ${startTime.toFixed(1)}s. Tap again for end.`;
         tapState = 1;
       } else {
-        // Второй тап - конец отрезка
         endTime = currentTime;
-        document.getElementById('end-time').value = endTime;
-        document.getElementById('tap-status').textContent = `Loop set: ${startTime}s → ${endTime}s`;
+        document.getElementById('end-time').value = endTime.toFixed(1);
+        document.getElementById('tap-status').textContent = `Loop set: ${startTime.toFixed(1)}s → ${endTime.toFixed(1)}s`;
         tapState = 0;
-        startLoop();
       }
     }
 
-    // Запуск цикла
     function startLoop() {
-      if (!player || startTime >= endTime) return;
+      if (!player) return;
+      
+      // Получаем значения из полей ввода
+      startTime = parseFloat(document.getElementById('start-time').value) || 0;
+      endTime = parseFloat(document.getElementById('end-time').value) || 0;
+      
+      if (startTime >= endTime) {
+        alert("End time must be greater than start time!");
+        return;
+      }
+
+      cancelLoop(); // Отменяем предыдущий луп
+      isLooping = true;
       
       player.seekTo(startTime);
       player.playVideo();
+      
+      loopInterval = setInterval(checkTimeLoop, 100);
+      document.getElementById('tap-status').textContent = `Looping: ${startTime.toFixed(1)}s → ${endTime.toFixed(1)}s`;
     }
 
-    // Перезапуск цикла
-    function restartLoop() {
-      if (!player) return;
-      player.seekTo(startTime);
-      player.playVideo();
+    function cancelLoop() {
+      isLooping = false;
+      if (loopInterval) {
+        clearInterval(loopInterval);
+        loopInterval = null;
+      }
+      document.getElementById('tap-status').textContent = "Loop canceled";
     }
 
-    // Извлечение ID видео из URL
     function extractVideoId(url) {
       const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
       const match = url.match(regExp);
